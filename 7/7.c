@@ -9,19 +9,21 @@
 
 #define numOfIterations 2000000
 
+struct data {
+	int begin, end;
+	double val;
+};
+
 void * threadBody(void * param) 
 {
-	double * result = (double*)malloc(sizeof(double));
-	*result = 0;
+	struct data * datas = (struct data*)param;
 	int i;
-	int begin = ((int*)param)[0];
-	int end = ((int*)param)[1];
-	for(i = begin; i < end; ++i)
+	for(i = datas->begin; i < datas->end; ++i)
 	{
-		*result += 1.0/(i*4.0 + 1.0);
-		*result -= 1.0/(i*4.0 + 3.0);
+		datas->val += 1.0/(i*4.0 + 1.0);
+		datas->val -= 1.0/(i*4.0 + 3.0);
 	}
-	return (void*)result;
+	pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[])
@@ -36,19 +38,20 @@ int main(int argc, char* argv[])
 	printf("num of threads = %d\n", numOfThreads);
 	
 	pthread_t* threads = (pthread_t*)malloc(sizeof(pthread_t) * numOfThreads);
-	
-	int* shifts = (int*)malloc(sizeof(int) * (numOfThreads + 1));
+	struct data * datas = (struct data*)malloc(sizeof(struct data) * numOfThreads);
 	
 	int i;
 	for (i = 0; i < numOfThreads; ++i)
 	{
-		shifts[i] = numOfIterations/numOfThreads * i;
+		datas[i].val = 0; 
+		datas[i].begin = numOfIterations/numOfThreads * i;
+		datas[i].end = numOfIterations/numOfThreads * (i + 1);
 	}
-	shifts[numOfThreads] = numOfIterations;
+	datas[numOfThreads - 1].end = numOfIterations;
 	
 	for (i = 0; i < numOfThreads; ++i)
 	{
-		code = pthread_create(&threads[i], NULL, threadBody, (void*)(&shifts[i]));
+		code = pthread_create(&threads[i], NULL, threadBody, (void*)(&datas[i]));
 		if (code != 0)
 		{
 			perror("Thread create error");
@@ -59,16 +62,17 @@ int main(int argc, char* argv[])
 	double pi = 0;
 	for(i = 0; i < numOfThreads; ++i)
 	{
-		double* result;
-		code = pthread_join(threads[i], (void**)(&result));
+		code = pthread_join(threads[i], NULL);
 		if (code != 0){
 			perror("Joing thread error");
 			exit(0);
 		}
-		pi += *result;
+		pi += datas[i].val;
 	}
 	pi *= 4.0;
 	printf("pi done - %.15g \n", pi);  
 	
+	free(threads);
+	free(datas);
 	return 0;
 }

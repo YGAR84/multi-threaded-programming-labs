@@ -22,23 +22,54 @@ void * threadBody(void * param)
 	printStrings((char**)param);
 }
 
+char** createStrings(int threads, int strnum)
+{
+	char** result = (char**)malloc(sizeof(char*) * threads * strnum);
+	if(result == NULL)
+	{
+		printf("Error while allocating memory\n");
+		exit(0);
+	}
+	
+	int i;
+	for(i = 0; i < threads; ++i)
+	{
+		int j;
+		for(j = 0; j < strnum; ++j)
+		{
+			result[i * strnum + j] = (char*)malloc(sizeof(char) * stringSize);
+			
+			if(result[i * strnum + j] == NULL)
+			{
+				printf("Error while allocating memory\n");
+				exit(0);
+			}
+			
+			sprintf(result[i * strnum + j], "Thread %d %d", i, i * threads + j);
+		}
+	}
+	return result;
+}
+
+void deleteStrings(char** strings, int threads, int strnum)
+{
+	int i;
+	for(i = 0; i < threads * strnum; ++i)
+	{
+		free(strings[i]);
+	}
+	
+	free(strings);
+}
+
 int main()
 {
 	pthread_t threads[numOfThreads];
-	char **texts = (char**)malloc(sizeof(char*) * numOfThreads * numOfStrings);
+	char **texts = createStrings(numOfThreads, numOfStrings);
 	int code;
-	
 	int i;
-	for (i = 0; i < numOfThreads; ++i)
-	{
-		int j;
-		for (j = 0; j < numOfStrings; ++j)
-		{
-			texts[i * numOfStrings + j] = (char*)malloc(sizeof(char) * stringSize);
-			sprintf(texts[i * numOfStrings + j], "Thread %d %d", i, i * numOfStrings+ j);
-		}
-	}
 	
+	//Creating threads for printing strings
 	for (i = 0; i < numOfThreads; ++i)
 	{
 		code = pthread_create(&threads[i], NULL, threadBody, (void*)(&texts[i * numOfStrings]));
@@ -48,7 +79,8 @@ int main()
 			exit(0);
 		}
 	}
-
+	
+	//Joining threads 
 	for (i = 0; i < numOfThreads; ++i)
 	{
 		code = pthread_join(threads[i], NULL);
@@ -58,10 +90,8 @@ int main()
 		}
 	}
 	
-	for (i = 0; i < numOfThreads * numOfStrings; ++i)
-	{
-		free(texts[i]);
-	}
-	free(texts);
-	return 0;
+	
+	deleteStrings(texts, numOfThreads, numOfStrings);
+	
+	pthread_exit(NULL);
 }

@@ -37,5 +37,5 @@ int main()
 		perror("Joining thread error");
 	}
 	printTenStrings("yes");
-	return 0;
+	pthread_exit(NULL);
 }
