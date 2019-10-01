@@ -27,7 +27,7 @@ char** createStrings(int threads, int strnum)
 	char** result = (char**)malloc(sizeof(char*) * threads * strnum);
 	if(result == NULL)
 	{
-		printf("Error while allocating memory\n");
+		fprintf(stderr, "Error while allocating memory\n");
 		exit(0);
 	}
 	
@@ -41,7 +41,7 @@ char** createStrings(int threads, int strnum)
 			
 			if(result[i * strnum + j] == NULL)
 			{
-				printf("Error while allocating memory\n");
+				fprintf(stderr, "Error while allocating memory\n");
 				exit(0);
 			}
 			
