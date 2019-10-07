@@ -10,8 +10,8 @@ void printStrings(const char * text)
 {
 	while(1)
 	{
-		write(0, text, strlen(text));
-		fflush(0);
+		write(STDOUT_FILENO, text, strlen(text));
+		fflush(STDOUT_FILENO);
 	}
 
 }
@@ -25,11 +25,8 @@ int main()
 {
 	pthread_t thread;
 	
-	char text[10];
+	char text[] = "a";
 	int code;
-	
-	sprintf(text, "a");
-
 	
 	code = pthread_create(&thread, NULL, threadBody, (void*)text);
 	if (code != 0)
@@ -44,6 +41,12 @@ int main()
 	if (code != 0)
 	{
 		perror("Canceling thread error");
+	}
+	
+	code = pthread_join(thread, NULL);
+	if(code != 0)
+	{
+		perror("Joining thread error");
 	}
 	
 	return 0;
