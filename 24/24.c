@@ -279,16 +279,17 @@ int queuePut(queue * q, char* mess)
 		return EQDROP;
 	}
 	
-	strlcpy(q->messages[q->tail], mess, MAX_LEN);
-	if(strlen(mess) >= MAX_LEN)
-		q->messages[q->tail][MAX_LEN - 1] = '\0';
-	
-	int result = strlen(q->messages[q->tail]);
+	int result = strlcpy(q->messages[q->tail], mess, MAX_LEN);
+	if(result >= MAX_LEN)
+	{
+		mutexUnlock(&q->mutex);
+		return ERROR;
+	}
 
 	q->tail = (q->tail + 1) % q->capacity;
 	q->size++;
 	
-	int eCode = condSignal(&q->emptyCond);
+	int eCode = condSignal(&q->filledCond);
 	if(eCode != SUCCESS)
 	{
 		mutexUnlock(&q->mutex);
@@ -325,11 +326,16 @@ int queuePop(queue* q, char* buf, size_t buf_size)
 	}
 	
 	int result = strlcpy(buf, q->messages[q->head], buf_size);
+	if(result >= buf_size)
+	{
+		mutexUnlock(&q->mutex);
+		return ERROR;
+	}
 
 	q->head = (q->head + 1) % q->capacity;
 	q->size--;
 	
-	int eCode = condSignal(&q->filledCond);
+	int eCode = condSignal(&q->emptyCond);
 	if(eCode != SUCCESS)
 	{
 		mutexUnlock(&q->mutex);
