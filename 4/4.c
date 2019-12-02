@@ -6,12 +6,20 @@
 #include <unistd.h>
 #include <strings.h>
 
+#define WRITE_ERROR -1
+
 void printStrings(const char * text) 
 {
+	int num;
 	while(1)
 	{
-		write(STDOUT_FILENO, text, strlen(text));
-		fflush(STDOUT_FILENO);
+		num = write(STDOUT_FILENO, text, strlen(text));
+		if(num == WRITE_ERROR)
+		{
+			perror("Write error");
+			pthread_exit(NULL);
+		}
+		fflush(stdout);
 	}
 
 }

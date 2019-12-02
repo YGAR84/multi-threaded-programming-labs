@@ -6,12 +6,20 @@
 #include <unistd.h>
 #include <strings.h>
 
-void printStrings(const char * text)
+#define WRITE_ERROR -1
+
+void printStrings(const char * text) 
 {
+	int num;
 	while(1)
 	{
-		write(STDOUT_FILENO, text, strlen(text));
-		fflush(STDOUT_FILENO);
+		num = write(STDOUT_FILENO, text, strlen(text));
+		if(num == WRITE_ERROR)
+		{
+			perror("Write error");
+			pthread_exit(NULL);
+		}
+		fflush(stdout);
 	}
 }
 
@@ -26,6 +34,8 @@ void * threadBody(void * param)
 	pthread_cleanup_push(handler, NULL);
 	printStrings((char*)param);
 	pthread_cleanup_pop(0);
+	
+	pthread_exit(NULL);
 }
 
 int main()
@@ -33,24 +43,24 @@ int main()
 	pthread_t thread;
 	
 	char text[] = "a";
-	int code;
 
-	code = pthread_create(&thread, NULL, threadBody, (void*)text);
-	if (code != 0)
+	errno = pthread_create(&thread, NULL, threadBody, (void*)text);
+	if (errno != 0)
 	{
 		perror("Thread create error");
 		exit(0);
 	}
+	
 	sleep(2);
 	
-	code = pthread_cancel(thread);
-	if (code != 0)
+	errno = pthread_cancel(thread);
+	if (errno != 0)
 	{
 		perror("Canceling thread error");
 	}
 	
-	code = pthread_join(thread, NULL);
-	if(code != 0)
+	errno = pthread_join(thread, NULL);
+	if(errno != 0)
 	{
 		perror("Joining thread error\n");
 	}

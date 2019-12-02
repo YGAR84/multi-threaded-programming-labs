@@ -89,15 +89,15 @@ void* myMalloc(size_t size)
 	if (result == NULL)
 	{
 		freeMemoryList();
-		fprintf(stderr, "Error while allocating memory\n");
+		perror(NULL);
 		exit(1);
 	}
 	
 	MemoryList* ml = addInMemoryList(result);
 	if(ml == NULL)
 	{
-		fprintf(stderr, "Error while allocating memory\n");
 		freeMemoryList();
+		perror(NULL);
 		exit(1);
 	}
 	return result;
@@ -135,6 +135,7 @@ void myFree(void* _ptr)
 	return;
 }
 
+
 void printStrings(char ** texts) 
 {
 	int i;
@@ -153,10 +154,6 @@ void * threadBody(void * param)
 char*** createStrings(int threads, int strnum)
 {
 	char*** result = (char***)myMalloc(sizeof(char**) * threads);
-	if(result == NULL)
-	{
-		return NULL;
-	}
 
 	int i;
 	for(i = 0; i < threads; ++i)
@@ -199,10 +196,9 @@ int main()
 		code = pthread_join(threads[i], NULL);
 		if (code != 0)
 		{
-			perror("Joing thread error:");
+			perror("Joining thread error:");
 		}
 	}
-	
 	
 	freeMemoryList();
 	pthread_exit(NULL);
